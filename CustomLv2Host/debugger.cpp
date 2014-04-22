@@ -322,6 +322,8 @@ void Debugger::print_plugin(LilvWorld* world, const LilvPlugin* p)
 
 void Debugger::list_plugins(const LilvPlugins* list)
 {
+    printf("----- List of plugins -----\n");
+
     LILV_FOREACH(plugins, i, list) {
         const LilvPlugin* p = lilv_plugins_get(list, i);
         LilvNode* n = lilv_plugin_get_name(p);
