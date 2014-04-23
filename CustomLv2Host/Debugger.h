@@ -4,8 +4,8 @@
 #include "lv2/lv2plug.in/ns/ext/presets/presets.h"
 #include "lv2/lv2plug.in/ns/ext/event/event.h"
 
-namespace lv2 {
-namespace tools {
+namespace sound
+{
 
 /**
 * Tool to print some data on the terminal.
@@ -27,5 +27,4 @@ struct Debugger
   
 };
 
-}
 }

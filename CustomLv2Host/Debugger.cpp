@@ -1,10 +1,10 @@
-#include "debugger.h"
+#include "Debugger.h"
 
 #include <math.h>
 #include <stdlib.h>
 
-namespace lv2 {
-namespace tools {
+namespace sound 
+{
 
 void Debugger::print_port(LilvWorld* world,
                         const LilvPlugin* p,
@@ -332,7 +332,4 @@ void Debugger::list_plugins(const LilvPlugins* list)
     }
 }
 
-
-
-}
 }

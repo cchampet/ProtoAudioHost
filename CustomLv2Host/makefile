@@ -1,24 +1,27 @@
-BIN = CustomLv2Host
+BIN = customLv2Host
 
 INC_DIR = -I/datas/cnt/workspace/lv2/lilv-0.18.0/lilv-install/include/lilv-0
 
-LIB_DIR = 
-LIB     = -lsndfile
-LIB_DYN = /datas/cnt/workspace/lv2/lilv-0.18.0/lilv-install/lib/liblilv-0.so
+LIB_DIR = -L/datas/cnt/workspace/lv2/lilv-0.18.0/lilv-install/lib/
+LIB     = -lsndfile -llilv-0
 
 .PHONY: all docs clean
 
-CustomLv2Host: debugger.o main.cpp
-	g++ $(INC_DIR) -ansi -Wall -g -O0 -o $(BIN) main.cpp debugger.o $(LIB) $(LIB_DIR) $(LIB_DYN)
+customLv2Host: Debugger.o Lv2Graph.o Node.o main.cpp
+	g++ $(INC_DIR) -ansi -Wall -g -O0 -o $(BIN) main.cpp Debugger.o Lv2Graph.o Node.o $(LIB) $(LIB_DIR)
 
-debugger.o: debugger.cpp
-	g++ $(INC_DIR) -ansi -Wall -g -O0 -o debugger.o -c debugger.cpp $(LIB_DIR) $(LIB_DYN)
+Debugger.o: Debugger.cpp
+	g++ $(INC_DIR) -ansi -Wall -g -O0 -o Debugger.o -c Debugger.cpp $(LIB_DIR)
+Lv2Graph.o: Lv2Graph.cpp Node.o
+	g++ $(INC_DIR) -ansi -Wall -g -O0 -o Lv2Graph.o -c Lv2Graph.cpp $(LIB_DIR)
+Node.o: Node.cpp
+	g++ $(INC_DIR) -ansi -Wall -g -O0 -o Node.o -c Node.cpp $(LIB_DIR)
 
 docs:
 	doxygen
 
 clean:
 	rm *.o
-	rm testVFX.wav
-	rm -f CustomLv2Host
+	rm underwaterVFX.wav
+	rm -f customLv2Host
 
