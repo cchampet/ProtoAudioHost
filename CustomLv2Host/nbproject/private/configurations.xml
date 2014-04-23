@@ -2,6 +2,10 @@
 <configurationDescriptor version="94">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="/datas/cnt/workspace/ProtoAudio/CustomLv2Host" name="0">
+      <df name="data">
+      </df>
+      <df name="obj">
+      </df>
       <in>Debugger.cpp</in>
       <in>Debugger.h</in>
       <in>Lv2Graph.cpp</in>
