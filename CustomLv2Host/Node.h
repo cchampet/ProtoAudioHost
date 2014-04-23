@@ -20,9 +20,7 @@ public:
 
   Node( Lv2Graph* graph, const std::string pluginURI, int sampleRate );
   ~Node( );
-
-  //Node& operator=(const Node& otherNode);
-
+  
   void connectAudioInput( std::vector< short >& audioInputBuffer );
   void connectAudioOutput( std::vector< short >& audioOutputBuffer );
 
@@ -36,23 +34,23 @@ public:
   /**
   * Getters
   */
-  Lv2Graph* getGraph() const { return pGraph; }
-  Lilv::Instance* getInstance( ) const { return pInstance; }
-  std::vector< std::vector< int > > getControlBuffers() const { return controlBuffers; }
+  Lv2Graph* getGraph() const { return _pGraph; }
+  Lilv::Instance* getInstance( ) const { return _pInstance; }
+  const std::vector< std::vector< int > >& getControlBuffers() const { return _controlBuffers; }
   Lilv::Plugin getPlugin( Property pluginURI ) const;
 
 private:
 
   void initAudioBuffers( );
 
-  Lv2Graph*       pGraph;
+  Lv2Graph*       _pGraph;
 
-  Lilv::Instance* pInstance;
+  Lilv::Instance* _pInstance;
   
-  std::vector< std::vector< int > > controlBuffers;
+  std::vector< std::vector< int > > _controlBuffers;
 
-  static const size_t bufferControlInput = 0;
-  static const size_t bufferControlOutput = 1;
+  static const size_t _bufferControlInput = 0;
+  static const size_t _bufferControlOutput = 1;
 };
 
 }

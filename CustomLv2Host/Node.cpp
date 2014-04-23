@@ -11,14 +11,14 @@ namespace sound
 {
 
 Node::Node( Lv2Graph* graph, const std::string pluginURIstr, int samplerate )
-: pGraph(graph)
+: _pGraph(graph)
 {
-  Property pluginURI = pGraph->getWorld()->new_uri( &( pluginURIstr[0] ) );
+  Property pluginURI = _pGraph->getWorld()->new_uri( &( pluginURIstr[0] ) );
 
-  pInstance = Lilv::Instance::create( getPlugin( pluginURI ), samplerate, NULL );
-  if( pInstance )
+  _pInstance = Lilv::Instance::create( getPlugin( pluginURI ), samplerate, NULL );
+  if( _pInstance )
   {
-    pInstance->activate( );
+    _pInstance->activate( );
 
     // buffers
     initAudioBuffers( );
@@ -26,7 +26,7 @@ Node::Node( Lv2Graph* graph, const std::string pluginURIstr, int samplerate )
     connectControlOutput( );
 
     // test
-    Debugger::print_plugin( pGraph->getWorld()->me, getPlugin( pluginURI ).me );
+    Debugger::print_plugin( _pGraph->getWorld()->me, getPlugin( pluginURI ).me );
   }
   else
   {
@@ -35,42 +35,31 @@ Node::Node( Lv2Graph* graph, const std::string pluginURIstr, int samplerate )
     exit(1);
   }
 }
-/*
-Node& Node::operator=(const Node& otherNode)
-{
-  if (this != &otherNode)
-  {
-    this->pGraph = otherNode.getGraph( );
-    this->pInstance = otherNode.getInstance( );
-    this->controlBuffers = otherNode.getControlBuffers( );
-  }
-  return *this;
-}
-*/
+
 Node::~Node()
 {
-  pInstance->deactivate();
+  _pInstance->deactivate();
   //pInstance->free();
 }
 
 Lilv::Plugin Node::getPlugin( Property pluginURI ) const {
-  return ( ( Lilv::Plugins )pGraph->getWorld()->get_all_plugins() ).get_by_uri( pluginURI );
+  return ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( pluginURI );
 }
 
 // private function
 void Node::initAudioBuffers( )
 {
-  Property pluginURI = pGraph->getWorld()->new_uri( &( pInstance->get_descriptor()->URI[0] ) );
+  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
   // control input / output
-  controlBuffers.push_back( std::vector< int >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
-  controlBuffers.push_back( std::vector< int >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
+  _controlBuffers.push_back( std::vector< int >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
+  _controlBuffers.push_back( std::vector< int >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
 }
 
 void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
 {
-  Property audio = pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT );
-  Property input = pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
-  Property pluginURI = pGraph->getWorld()->new_uri( &( pInstance->get_descriptor()->URI[0] ) );
+  Property audio = _pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT );
+  Property input = _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
+  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
 
   for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
   {
@@ -78,7 +67,7 @@ void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
 
     if( port.is_a( audio ) && port.is_a( input ) )
     {
-      this->pInstance->connect_port( portIndex, &audioInputBuffer[0] );
+      this->_pInstance->connect_port( portIndex, &audioInputBuffer[0] );
       return;
     }
   }
@@ -88,9 +77,9 @@ void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
 
 void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
 {
-  Property audio = pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT );
-  Property output = pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
-  Property pluginURI = pGraph->getWorld()->new_uri( &( pInstance->get_descriptor()->URI[0] ) );
+  Property audio = _pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT );
+  Property output = _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
+  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
 
   for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
   {
@@ -98,7 +87,7 @@ void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
 
     if( port.is_a( audio ) && port.is_a( output ) )
     {
-      this->pInstance->connect_port( portIndex, &audioOutputBuffer[0] );
+      this->_pInstance->connect_port( portIndex, &audioOutputBuffer[0] );
       return;
     }
   }
@@ -109,9 +98,9 @@ void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
 
 void Node::connectControlInput( )
 {
-  Property control = pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT );
-  Property input = pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
-  Property pluginURI = pGraph->getWorld()->new_uri( &( pInstance->get_descriptor()->URI[0] ) );
+  Property control = _pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT );
+  Property input = _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
+  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
 
   for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
   {
@@ -119,8 +108,7 @@ void Node::connectControlInput( )
 
     if( port.is_a( control ) && port.is_a( input ) )
     {
-      std::cout << "connectControlInput" << std::endl;
-      this->pInstance->connect_port( portIndex, &controlBuffers.at( bufferControlInput ) );
+      this->_pInstance->connect_port( portIndex, &_controlBuffers.at( _bufferControlInput ).at( port.get_index() ) );
       //set to default value
 
       return;
@@ -130,9 +118,9 @@ void Node::connectControlInput( )
 
 void Node::connectControlOutput( )
 {
-  Property control = pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT );
-  Property output = pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
-  Property pluginURI = pGraph->getWorld()->new_uri( &( pInstance->get_descriptor()->URI[0] ) );
+  Property control = _pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT );
+  Property output = _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
+  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
 
   for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
   {
@@ -140,8 +128,9 @@ void Node::connectControlOutput( )
 
     if( port.is_a( control ) && port.is_a( output ) )
     {
-      std::cout << "connectControlOutput" << std::endl;
-      this->pInstance->connect_port( portIndex, &controlBuffers.at( bufferControlOutput ) );
+      this->_pInstance->connect_port( portIndex, &_controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) );
+	  //set to default value
+	  
       return;
     }
   }
@@ -149,20 +138,19 @@ void Node::connectControlOutput( )
 
 void Node::setParam( const std::string& portSymbol, const unsigned int value)
 {
-  Property input = pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
-  Property output = pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
-  Property pluginURI = pGraph->getWorld()->new_uri( &( pInstance->get_descriptor()->URI[0] ) );
+  Property input = _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
+  Property output = _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
+  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
 
-  Lilv::Port port = getPlugin( pluginURI ).get_port_by_symbol( pGraph->getWorld()->new_string(&portSymbol[0]) );
+  Lilv::Port port = getPlugin( pluginURI ).get_port_by_symbol( _pGraph->getWorld()->new_string(&portSymbol[0]) );
 
   if ( port.is_a( input ) )
   {
-    std::cout << "port.get_index() : " << port.get_index() << " / update param to : " << value << std::endl;
-    controlBuffers.at( bufferControlInput ).at( port.get_index() ) = value;
+    _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) = value;
   }
   else if ( port.is_a( output ) )
   {
-    controlBuffers.at( bufferControlOutput ).at( port.get_index() ) = value;
+    _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) = value;
   }
   else
   {
@@ -173,7 +161,7 @@ void Node::setParam( const std::string& portSymbol, const unsigned int value)
 
 void Node::process(size_t sampleCount)
 {
-  pInstance->run( sampleCount );
+  _pInstance->run( sampleCount );
 }
 
 }

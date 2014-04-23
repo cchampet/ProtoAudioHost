@@ -22,13 +22,13 @@ public:
 
   void processFrame( const short* bufferIn, short* bufferOut );
 
-  Lilv::World* getWorld() const {return pWorld;}
-  Node& getNode( size_t indexNode ) const { return *nodes.at(indexNode); }
+  Lilv::World* getWorld() const {return _pWorld;}
+  Node& getNode( size_t indexNode ) const { return *_nodes.at(indexNode); }
   
   /**
   * Size of audio buffers.
   */
-  static const size_t audioBufferSize = 128;
+  static const size_t _audioBufferSize = 128;
 
 private:
 
@@ -37,17 +37,17 @@ private:
   /**
   * Contains all data of all lv2 plugins on the system.
   */
-  Lilv::World* pWorld;
+  Lilv::World* _pWorld;
 
   /**
   * The list of nodes (intances) in the graph.
   */
-  std::vector<Node*> nodes;
+  std::vector<Node*> _nodes;
 
   /**
   * Audio buffers, to manage results of the nodes's process.
   */
-  std::vector< std::vector< short > > audioBuffers;
+  std::vector< std::vector< short > > _audioBuffers;
 };
 
 }

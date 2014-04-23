@@ -13,7 +13,7 @@
 int main(int argc, char** argv)
 {
   // audio data - input / output / buffers
-  SndfileHandle infile( "data/underwater.wav" );
+  SndfileHandle infile( "../data/underwater.wav" );
   SndfileHandle outfile;
   
   const int format = infile.format();
@@ -24,7 +24,7 @@ int main(int argc, char** argv)
   std::vector< short > audioIn( samplerate * numChannels * timeToRead, 0 );
   std::vector< short > audioOut( samplerate * numChannels * timeToRead, 0 );
 
-  outfile = SndfileHandle( "data/underwaterVFX.wav" , SFM_WRITE, format , numChannels , samplerate );
+  outfile = SndfileHandle( "../data/underwaterVFX.wav" , SFM_WRITE, format , numChannels , samplerate );
 
 
   sound::Lv2Graph graph;
