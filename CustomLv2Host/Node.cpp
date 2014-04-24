@@ -77,6 +77,11 @@ void Node::connectControlInput( )
     {
       _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) ) );
       //set to default value
+      float minValue;
+      float maxValue;
+      float defaultValue;
+      getPlugin( ).get_port_ranges_float( &minValue, &maxValue, &defaultValue );
+       _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) = defaultValue;
 
       return;
     }
@@ -93,7 +98,12 @@ void Node::connectControlOutput( )
     {
       _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) ) );
 	  //set to default value
-	  
+      float minValue;
+      float maxValue;
+      float defaultValue;
+      getPlugin( ).get_port_ranges_float( &minValue, &maxValue, &defaultValue );
+       _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) = defaultValue;
+       
       return;
     }
   }
