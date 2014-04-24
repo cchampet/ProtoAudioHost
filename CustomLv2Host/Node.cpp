@@ -1,8 +1,7 @@
 #include "Node.h"
-
 #include "Lv2Graph.h"
 
-#include <cstdlib> //exit
+#include <exception>
 
 #include <iostream>
 #include "Debugger.h"
@@ -14,26 +13,23 @@ Node::Node( Lv2Graph* graph, const std::string pluginURIstr, int samplerate )
 : _pGraph(graph)
 {
   Property pluginURI = _pGraph->getWorld()->new_uri( &( pluginURIstr[0] ) );
+  Lilv::Plugin plugin = ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( pluginURI );
 
-  _pInstance = Lilv::Instance::create( getPlugin( pluginURI ), samplerate, NULL );
-  if( _pInstance )
+  _pInstance = Lilv::Instance::create( plugin, samplerate, NULL );
+  if( !_pInstance )
   {
-    _pInstance->activate( );
-
-    // buffers
-    initAudioBuffers( );
-    connectControlInput( );
-    connectControlOutput( );
-
-    // test
-    Debugger::print_plugin( _pGraph->getWorld()->me, getPlugin( pluginURI ).me );
+    throw std::bad_alloc( );
   }
-  else
-  {
-    // exception - impossible to instanciate plugin
-    // throw ...
-    exit(1);
-  }
+  
+  _pInstance->activate( );
+
+  // buffers
+  initAudioBuffers( );
+  connectControlInput( );
+  connectControlOutput( );
+
+  // test
+  Debugger::print_plugin( _pGraph->getWorld()->me, plugin.me );
 }
 
 Node::~Node()
@@ -42,71 +38,42 @@ Node::~Node()
   //pInstance->free();
 }
 
-Lilv::Plugin Node::getPlugin( Property pluginURI ) const {
-  return ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( pluginURI );
-}
-
 // private function
 void Node::initAudioBuffers( )
 {
-  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
   // control input / output
-  _controlBuffers.push_back( std::vector< float >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
-  _controlBuffers.push_back( std::vector< float >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
+  _controlBuffers.push_back( std::vector< float >( getPlugin( ).get_num_ports( ), 0 ) );
+  _controlBuffers.push_back( std::vector< float >( getPlugin( ).get_num_ports( ), 0 ) );
 }
 
 void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
 {
-  Property audio = _pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT );
-  Property input = _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
-  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
-
-  for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
+  Lilv::Port port = getPlugin( ).get_port_by_symbol( getSymbolProperty( "in" ) );
+  
+  if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getInputURIProperty( ) ) )
   {
-    Lilv::Port port = getPlugin( pluginURI ).get_port_by_index(portIndex);
-
-    if( port.is_a( audio ) && port.is_a( input ) )
-    {
-      _pInstance->connect_port( portIndex, &audioInputBuffer[0] );
-      return;
-    }
+    _pInstance->connect_port( port.get_index(), &audioInputBuffer[0] );
   }
-  // exception - unregonized port
-  exit(1);
 }
 
 void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
 {
-  Property audio = _pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT );
-  Property output = _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
-  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
-
-  for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
+  Lilv::Port port = getPlugin( ).get_port_by_symbol( getSymbolProperty( "out" ) );
+  
+  if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getOutputURIProperty( ) ) )
   {
-    Lilv::Port port = getPlugin( pluginURI ).get_port_by_index(portIndex);
-
-    if( port.is_a( audio ) && port.is_a( output ) )
-    {
-      _pInstance->connect_port( portIndex, &audioOutputBuffer[0] );
-      return;
-    }
+    _pInstance->connect_port( port.get_index(), &audioOutputBuffer[0] );
   }
-  // exception - unregonized port
-  exit(1);
 }
 
 
 void Node::connectControlInput( )
 {
-  Property control = _pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT );
-  Property input = _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
-  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
-
-  for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
+  for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
   {
-    Lilv::Port port = getPlugin( pluginURI ).get_port_by_index(portIndex);
+    Lilv::Port port = getPlugin( ).get_port_by_index(portIndex);
 
-    if( port.is_a( control ) && port.is_a( input ) )
+    if( port.is_a( getControlURIProperty( ) ) && port.is_a( getInputURIProperty( ) ) )
     {
       _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) ) );
       //set to default value
@@ -118,15 +85,11 @@ void Node::connectControlInput( )
 
 void Node::connectControlOutput( )
 {
-  Property control = _pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT );
-  Property output = _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
-  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
-
-  for (unsigned int portIndex = 0; portIndex < getPlugin( pluginURI ).get_num_ports(); ++portIndex)
+  for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
   {
-    Lilv::Port port = getPlugin( pluginURI ).get_port_by_index(portIndex);
+    Lilv::Port port = getPlugin( ).get_port_by_index(portIndex);
 
-    if( port.is_a( control ) && port.is_a( output ) )
+    if( port.is_a( getControlURIProperty( ) ) && port.is_a( getOutputURIProperty( ) ) )
     {
       _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) ) );
 	  //set to default value
@@ -138,30 +101,54 @@ void Node::connectControlOutput( )
 
 void Node::setParam( const std::string& portSymbol, const float value)
 {
-  Property input = _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
-  Property output = _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );
-  Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
+  Lilv::Port port = getPlugin( ).get_port_by_symbol( _pGraph->getWorld()->new_string(&portSymbol[0]) );
 
-  Lilv::Port port = getPlugin( pluginURI ).get_port_by_symbol( _pGraph->getWorld()->new_string(&portSymbol[0]) );
-
-  if ( port.is_a( input ) )
+  if ( port.is_a( getInputURIProperty( ) ) )
   {
     _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) = value;
   }
-  else if ( port.is_a( output ) )
+  else // port.is_a( getOutputURIProperty( ) )
   {
     _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) = value;
-  }
-  else
-  {
-    //exception
-    exit(1);
   }
 }
 
 void Node::process(size_t sampleCount)
 {
   _pInstance->run( sampleCount );
+}
+
+Lilv::Plugin Node::getPlugin( ) const {
+  return ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( getPluginURIProperty( ) );
+}
+
+const Node::Property Node::getPluginURIProperty( ) const 
+{ 
+  return _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) ); 
+}
+
+const Node::Property Node::getAudioURIProperty( ) const 
+{ 
+  return _pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT ); 
+}
+
+const Node::Property Node::getInputURIProperty( ) const 
+{ 
+  return _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT ); 
+}
+
+const Node::Property Node::getOutputURIProperty( ) const 
+{ 
+  return _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT ); }
+
+const Node::Property Node::getControlURIProperty( ) const 
+{ 
+  return _pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT ); 
+}
+
+const Node::Property Node::getSymbolProperty( const std::string& symbol ) const 
+{ 
+  return _pGraph->getWorld()->new_string( &symbol[0] ); 
 }
 
 }

@@ -30,14 +30,19 @@ public:
   void setParam( const std::string& portSymbol, const float value );
 
   void process( size_t sampleCount );
-
-  /**
-  * Getters
-  */
+  
+  
   Lv2Graph* getGraph() const { return _pGraph; }
   Lilv::Instance* getInstance( ) const { return _pInstance; }
-  Lilv::Plugin getPlugin( Property pluginURI ) const;
-
+  
+  Lilv::Plugin getPlugin( ) const;
+  const Property getPluginURIProperty( ) const;
+  const Property getAudioURIProperty( ) const;
+  const Property getInputURIProperty( ) const;
+  const Property getOutputURIProperty( ) const;
+  const Property getControlURIProperty( ) const;
+  const Property getSymbolProperty( const std::string& symbol ) const;
+  
 private:
 
   void initAudioBuffers( );

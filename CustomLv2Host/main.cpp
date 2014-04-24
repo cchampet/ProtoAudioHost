@@ -54,7 +54,7 @@ int main(int argc, char** argv)
   // connect ports
   graph.connect( gain_1, gain_2 );
   // update params
-  gain_1.setParam( "gain", 0.f );
+  gain_1.setParam( "gain", 5.f );
   gain_2.setParam( "gain", 0.f );
   
   size_t readedSamples = 0;

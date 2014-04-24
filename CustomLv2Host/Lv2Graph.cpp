@@ -1,8 +1,5 @@
 #include "Lv2Graph.h"
 
-#include <cstdlib> //exit
-#include <cstring> //memcpy
-
 #include <iostream>
 #include <exception>
 
