@@ -1,5 +1,6 @@
 #include <sndfile.hh>
 #include <vector>
+#include <exception>
 
 #include "Node.h"
 #include "Lv2Graph.h"
@@ -12,20 +13,39 @@
 */
 int main(int argc, char** argv)
 {
-  // audio data - input / output / buffers
-  SndfileHandle infile( "../data/underwater.wav" );
+  SndfileHandle infile;
   SndfileHandle outfile;
+  try
+  {
+    infile = SndfileHandle( "../data/underwater.wav" );
+  }
+  catch(std::exception& e)
+  {
+    std::cout << "Exception when try to read the file :  " << e.what() << std::endl;
+    return 1;
+  }
   
   const int format = infile.format();
   const int numChannels = infile.channels();
   const int samplerate = infile.samplerate();
-  const float timeToRead = infile.frames() / (float)samplerate; //in seconds
-
-  std::vector< short > audioIn( samplerate * numChannels * timeToRead, 0 );
-  std::vector< short > audioOut( samplerate * numChannels * timeToRead, 0 );
+  const size_t nbFrames = infile.frames();
+  const size_t nbSamples = nbFrames * numChannels;
+  //const float timeToRead = nbFrames / (float)samplerate; //in seconds
+  
+  std::vector< short > audioIn;
+  std::vector< short > audioOut;
+  try
+  {
+    audioIn = std::vector< short > ( nbSamples, 0 );
+    audioOut = std::vector< short > ( nbSamples, 0 );
+  }
+  catch(std::exception& e)
+  {
+    std::cout << "Exception when try to allocate audio buffers : " << e.what() << std::endl;
+    return 1;
+  }
 
   outfile = SndfileHandle( "../data/underwaterVFX.wav" , SFM_WRITE, format , numChannels , samplerate );
-
 
   sound::Lv2Graph graph;
   // add nodes to the graph
@@ -34,26 +54,32 @@ int main(int argc, char** argv)
   // connect ports
   graph.connect( gain_1, gain_2 );
   // update params
-  gain_1.setParam( "gain", 5 );
-  gain_2.setParam( "gain", 10 );
-
-
+  gain_1.setParam( "gain", 0.f );
+  gain_2.setParam( "gain", 0.f );
+  
+  size_t readedSamples = 0;
   while( 1 )
   {
-    // read on disk
-    size_t readedSamples = infile.read( &audioIn[0], samplerate );
-    std::cout << "readedSamples : " << readedSamples << std::endl;
-    if( ! readedSamples )
+    if ( readedSamples == nbSamples )
       break;
-
+    
+    // read on disk
+    size_t currentReadedSamples = infile.read( &audioIn[readedSamples], samplerate );
+    std::cout << "readedSamples : " << currentReadedSamples << std::endl;
+    
+	if( ! currentReadedSamples )
+      break;
+	
     // process graph
-    for (size_t i = 0; i < readedSamples; ++i) 
+    for (size_t i = 0; i < currentReadedSamples; ++i) 
     {
-      graph.processFrame( &audioIn[ i ], &audioOut[ i ] );
+      graph.processFrame( &audioIn[ readedSamples + i ], &audioOut[ readedSamples + i ] );
     }
-
+	
     // write on disk
-    outfile.write( &audioOut[0], readedSamples );
+    outfile.write( &audioOut[readedSamples], currentReadedSamples );
+    
+    readedSamples += currentReadedSamples;
   }
 
   return 0;

@@ -28,6 +28,10 @@ void Lv2Graph::initAudioBuffers()
 Lv2Graph::~Lv2Graph()
 {
   delete _pWorld;
+  for ( size_t indexNode = 0; indexNode < _nodes.size(); ++indexNode )
+  {
+	  delete _nodes.at(indexNode);
+  }
 }
 
 Node& Lv2Graph::addNode( const std::string pluginURI, int samplerate )
@@ -48,24 +52,24 @@ void Lv2Graph::connect( Node& node1, Node& node2 )
 
 void Lv2Graph::processFrame( const short* bufferIn, short* bufferOut )
 {
-  size_t nbFrames = 2; // exception if nbFrames > Lv2Graph::audioBufferSize
-
   // if the graph is empty
   if ( _nodes.size() == 0 )
   {
-    memcpy( bufferOut, bufferIn, nbFrames );
+    bufferOut[0] = bufferIn[0];
     return;
   }
 
   // copy input
-  memcpy( &_audioBuffers.at(0)[0], bufferIn, nbFrames );
+  _audioBuffers.at(0)[0] = bufferIn[0];
+  
   // process nodes
   for ( unsigned int indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
   {
-    getNode( indexInstance ).process( nbFrames );
+    getNode( indexInstance ).process( 1 );
   }
+  
   // copy output
-  memcpy( bufferOut, &_audioBuffers.at(2)[0], nbFrames );
+  bufferOut[0] = _audioBuffers.at(2)[0];
 }
 
 }

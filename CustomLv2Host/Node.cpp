@@ -51,8 +51,8 @@ void Node::initAudioBuffers( )
 {
   Property pluginURI = _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) );
   // control input / output
-  _controlBuffers.push_back( std::vector< int >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
-  _controlBuffers.push_back( std::vector< int >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
+  _controlBuffers.push_back( std::vector< float >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
+  _controlBuffers.push_back( std::vector< float >( getPlugin( pluginURI ).get_num_ports( ), 0 ) );
 }
 
 void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
@@ -67,7 +67,7 @@ void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
 
     if( port.is_a( audio ) && port.is_a( input ) )
     {
-      this->_pInstance->connect_port( portIndex, &audioInputBuffer[0] );
+      _pInstance->connect_port( portIndex, &audioInputBuffer[0] );
       return;
     }
   }
@@ -87,7 +87,7 @@ void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
 
     if( port.is_a( audio ) && port.is_a( output ) )
     {
-      this->_pInstance->connect_port( portIndex, &audioOutputBuffer[0] );
+      _pInstance->connect_port( portIndex, &audioOutputBuffer[0] );
       return;
     }
   }
@@ -108,7 +108,7 @@ void Node::connectControlInput( )
 
     if( port.is_a( control ) && port.is_a( input ) )
     {
-      this->_pInstance->connect_port( portIndex, &_controlBuffers.at( _bufferControlInput ).at( port.get_index() ) );
+      _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) ) );
       //set to default value
 
       return;
@@ -128,7 +128,7 @@ void Node::connectControlOutput( )
 
     if( port.is_a( control ) && port.is_a( output ) )
     {
-      this->_pInstance->connect_port( portIndex, &_controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) );
+      _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) ) );
 	  //set to default value
 	  
       return;
@@ -136,7 +136,7 @@ void Node::connectControlOutput( )
   }
 }
 
-void Node::setParam( const std::string& portSymbol, const unsigned int value)
+void Node::setParam( const std::string& portSymbol, const float value)
 {
   Property input = _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT );
   Property output = _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT );

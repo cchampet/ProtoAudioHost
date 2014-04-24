@@ -27,7 +27,7 @@ public:
   void connectControlInput( );
   void connectControlOutput( );
 
-  void setParam( const std::string& portSymbol, const unsigned int value );
+  void setParam( const std::string& portSymbol, const float value );
 
   void process( size_t sampleCount );
 
@@ -36,7 +36,6 @@ public:
   */
   Lv2Graph* getGraph() const { return _pGraph; }
   Lilv::Instance* getInstance( ) const { return _pInstance; }
-  const std::vector< std::vector< int > >& getControlBuffers() const { return _controlBuffers; }
   Lilv::Plugin getPlugin( Property pluginURI ) const;
 
 private:
@@ -47,7 +46,7 @@ private:
 
   Lilv::Instance* _pInstance;
   
-  std::vector< std::vector< int > > _controlBuffers;
+  std::vector< std::vector< float > > _controlBuffers;
 
   static const size_t _bufferControlInput = 0;
   static const size_t _bufferControlOutput = 1;
