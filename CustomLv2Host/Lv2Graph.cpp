@@ -1,7 +1,7 @@
-#include "Lv2Graph.h"
-
 #include <iostream>
 #include <exception>
+
+#include "Lv2Graph.h"
 
 namespace sound
 {

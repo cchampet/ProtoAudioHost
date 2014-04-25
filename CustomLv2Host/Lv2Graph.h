@@ -6,7 +6,6 @@
 
 #include "Node.h"
 
-
 namespace sound
 {
 
@@ -17,7 +16,7 @@ public:
   ~Lv2Graph();
 
   Node& addNode( const std::string pluginURI, int samplerate );
-
+  
   void connect( Node& node1, Node& node2 );
 
   void processFrame( const short* bufferIn, short* bufferOut );

@@ -1,12 +1,11 @@
 #include <sndfile.hh>
 #include <vector>
 #include <exception>
+#include <iostream>
 
 #include "Node.h"
 #include "Lv2Graph.h"
 
-#include <iostream>
-#include "Debugger.h"
 
 /**
 * Proto which read test.wav, process 2 gain (of 5db and 10db), and write testVFX.wav
@@ -49,13 +48,13 @@ int main(int argc, char** argv)
 
   sound::Lv2Graph graph;
   // add nodes to the graph
-  sound::Node& gain_1 = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
-  sound::Node& gain_2 = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate ); //http://plugin.org.uk/swh-plugins/amp
+  sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
+  sound::Node& deesser = graph.addNode( "http://calf.sourceforge.net/plugins/Deesser", samplerate );
   // connect ports
-  graph.connect( gain_1, gain_2 );
+  graph.connect( gain, deesser );
   // update params
-  gain_1.setParam( "gain", 5.f );
-  gain_2.setParam( "gain", 0.f );
+  gain.setParam( "gain", 1.f );
+  deesser.setParam( "bypass", 1.f );
   
   size_t readedSamples = 0;
   while( 1 )

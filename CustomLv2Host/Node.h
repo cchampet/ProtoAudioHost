@@ -24,8 +24,7 @@ public:
   void connectAudioInput( std::vector< short >& audioInputBuffer );
   void connectAudioOutput( std::vector< short >& audioOutputBuffer );
 
-  void connectControlInput( );
-  void connectControlOutput( );
+  void connectControls( );
 
   void setParam( const std::string& portSymbol, const float value );
 
@@ -45,16 +44,14 @@ public:
   
 private:
 
-  void initAudioBuffers( );
+	void initControlBuffers( );
 
+	
   Lv2Graph*       _pGraph;
 
   Lilv::Instance* _pInstance;
   
-  std::vector< std::vector< float > > _controlBuffers;
-
-  static const size_t _bufferControlInput = 0;
-  static const size_t _bufferControlOutput = 1;
+  std::vector< float > _controlBuffers;
 };
 
 }

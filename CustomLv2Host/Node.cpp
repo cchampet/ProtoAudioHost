@@ -1,10 +1,12 @@
-#include "Node.h"
-#include "Lv2Graph.h"
-
 #include <exception>
-
+#include <stdexcept> //runtime error
 #include <iostream>
+
+#include "Node.h"
+
+#include "Lv2Graph.h"
 #include "Debugger.h"
+
 
 namespace sound
 {
@@ -15,21 +17,20 @@ Node::Node( Lv2Graph* graph, const std::string pluginURIstr, int samplerate )
   Property pluginURI = _pGraph->getWorld()->new_uri( &( pluginURIstr[0] ) );
   Lilv::Plugin plugin = ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( pluginURI );
 
+  // test
+  Debugger::print_plugin( _pGraph->getWorld()->me, plugin.me );
+  
   _pInstance = Lilv::Instance::create( plugin, samplerate, NULL );
   if( !_pInstance )
   {
+    // instantiation failed
     throw std::bad_alloc( );
   }
   
   _pInstance->activate( );
 
-  // buffers
-  initAudioBuffers( );
-  connectControlInput( );
-  connectControlOutput( );
-
-  // test
-  Debugger::print_plugin( _pGraph->getWorld()->me, plugin.me );
+  initControlBuffers( );
+  connectControls( );
 }
 
 Node::~Node()
@@ -38,73 +39,61 @@ Node::~Node()
   //pInstance->free();
 }
 
-// private function
-void Node::initAudioBuffers( )
+void Node::initControlBuffers( )
 {
-  // control input / output
-  _controlBuffers.push_back( std::vector< float >( getPlugin( ).get_num_ports( ), 0 ) );
-  _controlBuffers.push_back( std::vector< float >( getPlugin( ).get_num_ports( ), 0 ) );
+  for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
+    _controlBuffers.push_back( 0.f );
 }
 
 void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
 {
-  Lilv::Port port = getPlugin( ).get_port_by_symbol( getSymbolProperty( "in" ) );
-  
-  if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getInputURIProperty( ) ) )
+  for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
   {
-    _pInstance->connect_port( port.get_index(), &audioInputBuffer[0] );
+    Lilv::Port port = getPlugin( ).get_port_by_index( portIndex );
+  
+    if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getInputURIProperty( ) ) )
+    {
+      _pInstance->connect_port( port.get_index(), &audioInputBuffer[0] );
+    }
   }
 }
 
 void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
 {
-  Lilv::Port port = getPlugin( ).get_port_by_symbol( getSymbolProperty( "out" ) );
-  
-  if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getOutputURIProperty( ) ) )
-  {
-    _pInstance->connect_port( port.get_index(), &audioOutputBuffer[0] );
-  }
-}
-
-
-void Node::connectControlInput( )
-{
   for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
   {
-    Lilv::Port port = getPlugin( ).get_port_by_index(portIndex);
-
-    if( port.is_a( getControlURIProperty( ) ) && port.is_a( getInputURIProperty( ) ) )
+    Lilv::Port port = getPlugin( ).get_port_by_index( portIndex );
+  
+    if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getOutputURIProperty( ) ) )
     {
-      _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) ) );
-      //set to default value
-      float minValue;
-      float maxValue;
-      float defaultValue;
-      getPlugin( ).get_port_ranges_float( &minValue, &maxValue, &defaultValue );
-       _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) = defaultValue;
-
-      return;
+      _pInstance->connect_port( port.get_index(), &audioOutputBuffer[0] );
     }
   }
 }
 
-void Node::connectControlOutput( )
+
+void Node::connectControls( )
 {
   for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
   {
-    Lilv::Port port = getPlugin( ).get_port_by_index(portIndex);
-
-    if( port.is_a( getControlURIProperty( ) ) && port.is_a( getOutputURIProperty( ) ) )
+    // BUG : infinite loop with some plugins...
+    getPlugin( ).get_num_ports( );
+    
+    Lilv::Port port = getPlugin( ).get_port_by_index( portIndex );
+    
+    if( port.is_a( getControlURIProperty( ) ) )
     {
-      _pInstance->connect_port( portIndex, &( _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) ) );
-	  //set to default value
+      // get default value of port
       float minValue;
       float maxValue;
       float defaultValue;
       getPlugin( ).get_port_ranges_float( &minValue, &maxValue, &defaultValue );
-       _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) = defaultValue;
-       
-      return;
+      
+      // add a buffer for this control
+      _controlBuffers.at( portIndex ) = defaultValue;
+      
+      // connect the port to the buffer
+      _pInstance->connect_port( portIndex, &( _controlBuffers.at( portIndex ) ) );
     }
   }
 }
@@ -112,14 +101,18 @@ void Node::connectControlOutput( )
 void Node::setParam( const std::string& portSymbol, const float value)
 {
   Lilv::Port port = getPlugin( ).get_port_by_symbol( _pGraph->getWorld()->new_string(&portSymbol[0]) );
-
+  if( ! port.me )
+  {
+    throw std::runtime_error( portSymbol + " : param not found."  );
+  }
+  
   if ( port.is_a( getInputURIProperty( ) ) )
   {
-    _controlBuffers.at( _bufferControlInput ).at( port.get_index() ) = value;
+    _controlBuffers.at( port.get_index() ) = value;
   }
   else // port.is_a( getOutputURIProperty( ) )
   {
-    _controlBuffers.at( _bufferControlOutput ).at( port.get_index() ) = value;
+    _controlBuffers.at( port.get_index() ) = value;
   }
 }
 
