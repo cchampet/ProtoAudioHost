@@ -1,5 +1,6 @@
 #include <exception>
-#include <stdexcept> //runtime error
+#include <stdexcept> // runtime error
+#include <math.h> // isnan
 #include <iostream>
 
 #include "Node.h"
@@ -74,23 +75,40 @@ void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
 
 void Node::connectControls( )
 {
-  for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
+  size_t numPort = getPlugin( ).get_num_ports();
+  for (unsigned int portIndex = 0; portIndex < numPort; ++portIndex)
   {
     // BUG : infinite loop with some plugins...
-    getPlugin( ).get_num_ports( );
+    //getPlugin( ).get_num_ports( );
     
     Lilv::Port port = getPlugin( ).get_port_by_index( portIndex );
     
     if( port.is_a( getControlURIProperty( ) ) )
     {
       // get default value of port
-      float minValue;
-      float maxValue;
-      float defaultValue;
-      getPlugin( ).get_port_ranges_float( &minValue, &maxValue, &defaultValue );
+      float minValues[numPort];
+      float maxValues[numPort];
+      float defaultValues[numPort];
+      getPlugin( ).get_port_ranges_float( &minValues[0], &maxValues[0], &defaultValues[0] );
       
       // add a buffer for this control
-      _controlBuffers.at( portIndex ) = defaultValue;
+      if ( ! isnan( defaultValues[numPort] ))
+        _controlBuffers.at( portIndex ) = defaultValues[numPort];
+      else 
+      {
+        LilvNode* maxValue;
+        LilvNode* minValue;
+        LilvNode* defaultValue;
+        lilv_port_get_range( getPlugin( ).me, port.me, 
+                &defaultValue, 
+                &minValue, 
+                &maxValue );
+        if ( defaultValue && Lilv::Node( defaultValue ).is_float() )
+        {
+          float value = Lilv::Node( defaultValue ).as_float();
+          _controlBuffers.at( portIndex ) = value;
+        }
+      }
       
       // connect the port to the buffer
       _pInstance->connect_port( portIndex, &( _controlBuffers.at( portIndex ) ) );
@@ -119,6 +137,12 @@ void Node::setParam( const std::string& portSymbol, const float value)
 void Node::process(size_t sampleCount)
 {
   _pInstance->run( sampleCount );
+}
+
+void Node::printControlBuffers( ) const 
+{
+  for (unsigned int portIndex = 0; portIndex < _controlBuffers.size(); ++portIndex)
+    std::cout << "port #" << portIndex << " : " << _controlBuffers.at( portIndex ) << std::endl;
 }
 
 Lilv::Plugin Node::getPlugin( ) const {

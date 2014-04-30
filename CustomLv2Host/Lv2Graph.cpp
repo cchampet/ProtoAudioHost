@@ -65,6 +65,9 @@ void Lv2Graph::processFrame( const short* bufferIn, short* bufferOut )
     getNode( indexInstance ).process( 1 );
   }
   
+  // Print ControlBuffers (can see the value of latency after process nodes)
+  // _nodes.at( 1 )->printControlBuffers( );
+  
   // copy output
   bufferOut[0] = _audioBuffers.at(2)[0];
 }

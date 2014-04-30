@@ -8,7 +8,7 @@
 
 
 /**
-* Proto which read test.wav, process 2 gain (of 5db and 10db), and write testVFX.wav
+* Proto which read test.wav, process a gain of 5db and a limiter which produce delay of 0.15s, and write testVFX.wav
 */
 int main(int argc, char** argv)
 {
@@ -49,12 +49,14 @@ int main(int argc, char** argv)
   sound::Lv2Graph graph;
   // add nodes to the graph
   sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
-  sound::Node& deesser = graph.addNode( "http://calf.sourceforge.net/plugins/Deesser", samplerate );
+  sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", 96000);
+  
   // connect ports
-  graph.connect( gain, deesser );
+  graph.connect( gain, limiter );
+  
   // update params
-  gain.setParam( "gain", 1.f );
-  deesser.setParam( "bypass", 1.f );
+  gain.setParam( "gain", 0.f );
+  limiter.setParam( "delay_s", 0.15f );
   
   size_t readedSamples = 0;
   while( 1 )

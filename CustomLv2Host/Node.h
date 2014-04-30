@@ -42,6 +42,8 @@ public:
   const Property getControlURIProperty( ) const;
   const Property getSymbolProperty( const std::string& symbol ) const;
   
+  void printControlBuffers( ) const;
+  
 private:
 
 	void initControlBuffers( );
