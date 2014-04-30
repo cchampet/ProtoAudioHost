@@ -2,12 +2,14 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string>
 
 #include "lilv/lilv.h"
 
 #include "lv2/lv2plug.in/ns/ext/port-groups/port-groups.h"
 #include "lv2/lv2plug.in/ns/ext/presets/presets.h"
 #include "lv2/lv2plug.in/ns/ext/event/event.h"
+
 
 void static print_port(LilvWorld* world,
                         const LilvPlugin* p,
@@ -330,6 +332,9 @@ static void print_usage()
     printf("\n");
     printf("  --all           Show info of all plugins\n");
     printf("  --latency       Show info of plugins which has latency\n");
+    printf("  --presets       Show info of plugins which has presets (at least one)\n");
+    printf("  --uri <uri>    Show info of plugins which has presets (at least one)\n");
+
     printf("\n");
     printf("The environment variable LV2_PATH can be used to control where\n");
     printf("this (and all other lilv based LV2 hosts) will search for plugins.\n");
@@ -340,6 +345,9 @@ int main(int argc, char** argv)
 {
     bool all = false;
     bool latency = false;
+    bool presets = false;
+    bool pluginURI = false;
+    std::string pluginURIstr;
 
     print_usage();
     
@@ -359,6 +367,15 @@ int main(int argc, char** argv)
         {
             latency = true;
         }
+        else if (!strcmp(argv[i], "--presets"))
+        {
+            presets = true;
+        }
+        else if (!strcmp(argv[i], "--uri"))
+        {
+            pluginURI = true;
+            pluginURIstr = std::string(argv[i+1]);
+        }
     }
 
     LilvWorld* world = lilv_world_new();
@@ -369,10 +386,38 @@ int main(int argc, char** argv)
     LILV_FOREACH(plugins, i, plugins) 
     {
         const LilvPlugin* p = lilv_plugins_get(plugins, i);
+
         if(all)
             print_plugin(world, p);
         else if(latency && lilv_plugin_has_latency(p))
             print_plugin(world, p);
+        else if(presets)
+        {
+
+            LilvNode* label_pred = lilv_new_uri(world, LILV_NS_RDFS "label");
+            LilvNode* preset_class = lilv_new_uri(world, LV2_PRESETS__Preset);
+
+            LilvNodes* presets = lilv_plugin_get_related(p, preset_class);
+            if(presets)
+            {
+                LILV_FOREACH(nodes, i, presets) 
+                {
+                    const LilvNode* preset = lilv_nodes_get(presets, i);
+                    lilv_world_load_resource(world, preset);
+                    LilvNodes* titles = lilv_world_find_nodes(world, preset, label_pred, NULL);
+                    if (titles) 
+                    {
+                        print_plugin(world, p);
+                    }
+                }
+            }
+            lilv_nodes_free(presets);
+        }
+        else if(pluginURI)
+        {
+            if(lilv_node_as_uri(lilv_plugin_get_uri(p)) ==  lilv_node_as_uri(lilv_new_uri(world, &pluginURIstr[0])))
+                print_plugin(world, p);
+        }
     }
 
     lilv_world_free(world);
