@@ -58,6 +58,21 @@ int main(int argc, char** argv)
   gain.setParam( "gain", 0.f );
   limiter.setParam( "delay_s", 0.15f );
   
+  // TEST
+  sound::Node& reverb = graph.addNode("http://calf.sourceforge.net/plugins/Reverb", samplerate);
+  // test - ui (need to load the binary to test the UI of a plugin...)
+  LilvUIs* reverb_uis = lilv_plugin_get_uis ( reverb.getPlugin( ) );
+  std::cout << 	lilv_uis_size(reverb_uis) << std::endl;
+  LILV_FOREACH(uis, i, reverb_uis) 
+  {
+    const LilvUI* reverb_ui = lilv_uis_get(reverb_uis, i);
+    const LilvNode * node = lilv_ui_get_uri (reverb_ui);
+    const LilvNode * buddle_uri = lilv_ui_get_binary_uri(reverb_ui);
+    
+    std::cout << lilv_node_as_string(node) << std::endl;
+    std::cout << lilv_node_as_string(buddle_uri) << std::endl;
+  }
+  
   size_t readedSamples = 0;
   while( 1 )
   {
