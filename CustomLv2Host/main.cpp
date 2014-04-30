@@ -60,6 +60,20 @@ int main(int argc, char** argv)
   
   // TEST
   sound::Node& reverb = graph.addNode("http://calf.sourceforge.net/plugins/Reverb", samplerate);
+  // test - scale point
+  /*
+  LilvScalePoints * scalePoints = lilv_port_get_scale_points ( reverb.getPlugin( ), reverb.getPlugin( ).get_port_by_index( 9 ).me );
+  LilvNode* portName = lilv_port_get_name ( reverb.getPlugin( ), reverb.getPlugin( ).get_port_by_index( 9 ).me );
+  std::cout << "portName : " << lilv_node_as_string(portName) << std::endl;
+  
+  LILV_FOREACH(scale_points, i, scalePoints) 
+  {
+    const LilvScalePoint* scalePoint = lilv_scale_points_get(scalePoints, i);
+    std::cout << lilv_node_as_string(lilv_scale_point_get_label(scalePoint)) << " " << 
+            lilv_node_as_string(lilv_scale_point_get_value(scalePoint)) << std::endl;
+  }
+  */
+  
   // test - ui (need to load the binary to test the UI of a plugin...)
   LilvUIs* reverb_uis = lilv_plugin_get_uis ( reverb.getPlugin( ) );
   std::cout << 	lilv_uis_size(reverb_uis) << std::endl;
