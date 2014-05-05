@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   
   // TEST
   sound::Node& reverb = graph.addNode("http://calf.sourceforge.net/plugins/Reverb", samplerate);
+  /*
   // test - scale point
   /*
   LilvScalePoints * scalePoints = lilv_port_get_scale_points ( reverb.getPlugin( ), reverb.getPlugin( ).get_port_by_index( 9 ).me );
@@ -75,6 +76,7 @@ int main(int argc, char** argv)
   */
   
   // test - ui (need to load the binary to test the UI of a plugin...)
+  /*
   LilvUIs* reverb_uis = lilv_plugin_get_uis ( reverb.getPlugin( ) );
   std::cout << 	lilv_uis_size(reverb_uis) << std::endl;
   LILV_FOREACH(uis, i, reverb_uis) 
@@ -86,6 +88,20 @@ int main(int argc, char** argv)
     std::cout << lilv_node_as_string(node) << std::endl;
     std::cout << lilv_node_as_string(buddle_uri) << std::endl;
   }
+  */
+  
+  // test - plugin class
+  /*
+  const LilvPluginClasses* pluginClasses = lilv_world_get_plugin_classes ( graph.getWorld( )->me );
+  LILV_FOREACH(plugin_classes, i, pluginClasses) 
+  {
+    const LilvPluginClass *	pluginClass = lilv_plugin_classes_get (pluginClasses, i);
+    const LilvNode * nodeUri = lilv_plugin_class_get_uri(pluginClass);
+    const LilvNode * nodeLabel = lilv_plugin_class_get_label(pluginClass);
+    std::cout << lilv_node_as_string(nodeUri) << "  /  " << 
+            lilv_node_as_string(nodeLabel) << std::endl;
+  }
+  */
   
   size_t readedSamples = 0;
   while( 1 )
