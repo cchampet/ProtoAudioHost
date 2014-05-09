@@ -19,7 +19,7 @@ public:
   
   void connect( Node& node1, Node& node2 );
 
-  void processFrame( const short* bufferIn, short* bufferOut );
+  void processFrame( const float* bufferIn, float* bufferOut );
 
   Lilv::World* getWorld() const {return _pWorld;}
   Node& getNode( size_t indexNode ) const { return *_nodes.at(indexNode); }
@@ -46,7 +46,7 @@ private:
   /**
   * Audio buffers, to manage results of the nodes's process.
   */
-  std::vector< std::vector< short > > _audioBuffers;
+  std::vector< std::vector< float > > _audioBuffers;
 };
 
 }

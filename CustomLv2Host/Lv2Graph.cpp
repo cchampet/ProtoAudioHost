@@ -17,9 +17,9 @@ Lv2Graph::Lv2Graph()
 // private function
 void Lv2Graph::initAudioBuffers()
 {
-  _audioBuffers.push_back( std::vector< short >( _audioBufferSize, 0 ) );
-  _audioBuffers.push_back( std::vector< short >( _audioBufferSize, 0 ) );
-  _audioBuffers.push_back( std::vector< short >( _audioBufferSize, 0 ) );
+  _audioBuffers.push_back( std::vector< float >( _audioBufferSize, 0 ) );
+  _audioBuffers.push_back( std::vector< float >( _audioBufferSize, 0 ) );
+  _audioBuffers.push_back( std::vector< float >( _audioBufferSize, 0 ) );
 }
 
 Lv2Graph::~Lv2Graph()
@@ -47,7 +47,7 @@ void Lv2Graph::connect( Node& node1, Node& node2 )
   node2.connectAudioOutput( _audioBuffers.at(2) );
 }
 
-void Lv2Graph::processFrame( const short* bufferIn, short* bufferOut )
+void Lv2Graph::processFrame( const float* bufferIn, float* bufferOut )
 {
   // if the graph is empty
   if ( _nodes.size() == 0 )

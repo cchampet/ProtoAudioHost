@@ -32,12 +32,12 @@ int main(int argc, char** argv)
   const size_t nbSamples = nbFrames * numChannels;
   //const float timeToRead = nbFrames / (float)samplerate; //in seconds
   
-  std::vector< short > audioIn;
-  std::vector< short > audioOut;
+  std::vector< float > audioIn;
+  std::vector< float > audioOut;
   try
   {
-    audioIn = std::vector< short > ( nbSamples, 0 );
-    audioOut = std::vector< short > ( nbSamples, 0 );
+    audioIn = std::vector< float > ( nbSamples, 0 );
+    audioOut = std::vector< float > ( nbSamples, 0 );
   }
   catch(std::exception& e)
   {
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
   graph.connect( gain, limiter );
   
   // update params
-  gain.setParam( "gain", 0.f );
+  gain.setParam( "gain", 10.f );
   limiter.setParam( "delay_s", 0.15f );
   
   size_t readedSamples = 0;
