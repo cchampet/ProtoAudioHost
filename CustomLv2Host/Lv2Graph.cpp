@@ -10,16 +10,6 @@ Lv2Graph::Lv2Graph()
 {
   _pWorld = new Lilv::World();
   _pWorld->load_all();
-
-  initAudioBuffers();
-}
-
-// private function
-void Lv2Graph::initAudioBuffers()
-{
-  _audioBuffers.push_back( std::vector< float >( _audioBufferSize, 0 ) );
-  _audioBuffers.push_back( std::vector< float >( _audioBufferSize, 0 ) );
-  _audioBuffers.push_back( std::vector< float >( _audioBufferSize, 0 ) );
 }
 
 Lv2Graph::~Lv2Graph()
@@ -31,6 +21,27 @@ Lv2Graph::~Lv2Graph()
   }
 }
 
+void Lv2Graph::createAudioBuffer( const int bufferSize )
+{
+  // AudioBuffers Input / Output
+  _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
+  _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
+}
+
+void Lv2Graph::setUp( )
+{
+  for ( unsigned int indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
+  {
+    // As a special case, when sample_count == 0, the plugin should update
+    // any output ports that represent a single instant in time (e.g. control
+    // ports, but not audio ports). This is particularly useful for latent
+    // plugins, which should update their latency output port so hosts can
+    // pre-roll plugins to compute latency.
+    getNode( indexInstance ).process( 0 );
+  }
+  //@todo : update buffer when latency
+}
+
 Node& Lv2Graph::addNode( const std::string pluginURI, int samplerate )
 {
   Node* newNode = new Node( this, pluginURI, samplerate );
@@ -38,13 +49,22 @@ Node& Lv2Graph::addNode( const std::string pluginURI, int samplerate )
   return *_nodes.back();
 }
 
+void Lv2Graph::connect( std::vector< float >& bufferIn, Node& startedNode )
+{
+	startedNode.connectAudioInput( bufferIn );
+}
+
+void Lv2Graph::connect( Node& endedNode, std::vector< float >& bufferOut )
+{
+	endedNode.connectAudioOutput( bufferOut );
+}
+
 void Lv2Graph::connect( Node& node1, Node& node2 )
 {
-  node1.connectAudioInput( _audioBuffers.at(0) );
-  node1.connectAudioOutput( _audioBuffers.at(1) );
+  _audioBuffers.push_back( std::vector< float >( 1, 0.f ) );
   
-  node2.connectAudioInput( _audioBuffers.at(1) );
-  node2.connectAudioOutput( _audioBuffers.at(2) );
+  node1.connectAudioOutput( _audioBuffers.at( _audioBuffers.size() - 1 ) );
+  node2.connectAudioInput( _audioBuffers.at( _audioBuffers.size() - 1 ) );
 }
 
 void Lv2Graph::processFrame( const float* bufferIn, float* bufferOut )
@@ -55,21 +75,15 @@ void Lv2Graph::processFrame( const float* bufferIn, float* bufferOut )
     bufferOut[0] = bufferIn[0];
     return;
   }
-
-  // copy input
-  _audioBuffers.at(0)[0] = bufferIn[0];
   
   // process nodes
-  for ( unsigned int indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
+  for ( size_t indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
   {
     getNode( indexInstance ).process( 1 );
   }
   
   // Print ControlBuffers (can see the value of latency after process nodes)
   // _nodes.at( 1 )->printControlBuffers( );
-  
-  // copy output
-  bufferOut[0] = _audioBuffers.at(2)[0];
 }
 
 }

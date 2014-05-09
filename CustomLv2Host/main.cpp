@@ -28,45 +28,36 @@ int main(int argc, char** argv)
   const int format = infile.format();
   const int numChannels = infile.channels();
   const int samplerate = infile.samplerate();
-  const size_t nbFrames = infile.frames();
-  const size_t nbSamples = nbFrames * numChannels;
+  // const size_t nbFrames = infile.frames();
+  // const size_t nbSamples = nbFrames * numChannels;
   //const float timeToRead = nbFrames / (float)samplerate; //in seconds
-  
-  std::vector< float > audioIn;
-  std::vector< float > audioOut;
-  try
-  {
-    audioIn = std::vector< float > ( nbSamples, 0 );
-    audioOut = std::vector< float > ( nbSamples, 0 );
-  }
-  catch(std::exception& e)
-  {
-    std::cout << "Exception when try to allocate audio buffers : " << e.what() << std::endl;
-    return 1;
-  }
 
   outfile = SndfileHandle( "../data/underwaterVFX.wav" , SFM_WRITE, format , numChannels , samplerate );
 
+  // create graph
   sound::Lv2Graph graph;
+  graph.createAudioBuffer( samplerate );
+  
   // add nodes to the graph
   sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
-  sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", 96000);
+  sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
   
   // connect ports
+  graph.connect( graph.getAudioBufferInput(), gain );
   graph.connect( gain, limiter );
+  graph.connect( limiter, graph.getAudioBufferOutput() );
   
   // update params
   gain.setParam( "gain", 10.f );
   limiter.setParam( "delay_s", 0.15f );
   
-  size_t readedSamples = 0;
+  // setup
+  graph.setUp();
+  
   while( 1 )
   {
-    if ( readedSamples == nbSamples )
-      break;
-    
     // read on disk
-    size_t currentReadedSamples = infile.read( &audioIn[readedSamples], samplerate );
+    size_t currentReadedSamples = infile.read( &graph.getAudioBufferInput()[0], samplerate );
     std::cout << "readedSamples : " << currentReadedSamples << std::endl;
     
 	if( ! currentReadedSamples )
@@ -75,13 +66,11 @@ int main(int argc, char** argv)
     // process graph
     for (size_t i = 0; i < currentReadedSamples; ++i) 
     {
-      graph.processFrame( &audioIn[ readedSamples + i ], &audioOut[ readedSamples + i ] );
+      graph.processFrame( &graph.getAudioBufferInput()[i], &graph.getAudioBufferOutput()[i] );
     }
 	
     // write on disk
-    outfile.write( &audioOut[readedSamples], currentReadedSamples );
-    
-    readedSamples += currentReadedSamples;
+    outfile.write( &graph.getAudioBufferOutput()[0], currentReadedSamples );
   }
 
   return 0;
