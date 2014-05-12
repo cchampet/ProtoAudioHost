@@ -14,6 +14,8 @@ namespace sound
 
 Node::Node( Lv2Graph* graph, const std::string pluginURIstr, int samplerate )
 : _pGraph(graph)
+, _isInputConnected(false)
+, _isOutputConnected(false)
 {
   Property pluginURI = _pGraph->getWorld()->new_uri( &( pluginURIstr[0] ) );
   Lilv::Plugin plugin = ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( pluginURI );
@@ -56,6 +58,7 @@ void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
     if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getInputURIProperty( ) ) )
     {
       _pInstance->connect_port( port.get_index(), &audioInputBuffer[0] );
+	  _isInputConnected = true;
     }
   }
 }
@@ -69,6 +72,7 @@ void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
     if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getOutputURIProperty( ) ) )
     {
       _pInstance->connect_port( port.get_index(), &audioOutputBuffer[0] );
+	  _isOutputConnected = true;
     }
   }
 }

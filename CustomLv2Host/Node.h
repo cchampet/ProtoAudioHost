@@ -30,6 +30,7 @@ public:
 
   void process( size_t sampleCount );
   
+  bool isConnected() const {return _isInputConnected && _isOutputConnected ? true : false;}
   
   Lv2Graph* getGraph() const { return _pGraph; }
   Lilv::Instance* getInstance( ) const { return _pInstance; }
@@ -46,14 +47,16 @@ public:
   
 private:
 
-	void initControlBuffers( );
-
-	
+  void initControlBuffers( );
+  	
   Lv2Graph*       _pGraph;
 
   Lilv::Instance* _pInstance;
   
   std::vector< float > _controlBuffers;
+  
+  bool _isInputConnected;
+  bool _isOutputConnected;
 };
 
 }

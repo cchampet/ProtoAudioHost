@@ -39,8 +39,8 @@ int main(int argc, char** argv)
   graph.createAudioBuffer( samplerate );
   
   // add nodes to the graph
-  //sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
-  //sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
+  sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
+  sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
   sound::Node& reverb = graph.addNode("http://plugin.org.uk/swh-plugins/gverb", samplerate);
   
   // connect ports
@@ -49,9 +49,9 @@ int main(int argc, char** argv)
   graph.connect( reverb, graph.getAudioBufferOutput() );
   
   // update params
-  //gain.setParam( "gain", 0.f );
-  //limiter.setParam( "delay_s", 0.15f );
-  //limiter.setParam( "limit", -10.f );
+  gain.setParam( "gain", 0.f );
+  limiter.setParam( "delay_s", 0.15f );
+  limiter.setParam( "limit", -10.f );
   reverb.setParam( "revtime", 2.f );
   
   // setup

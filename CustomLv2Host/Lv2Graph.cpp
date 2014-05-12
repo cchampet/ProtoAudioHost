@@ -81,7 +81,8 @@ void Lv2Graph::processFrame( const short* bufferIn, short* bufferOut )
   // process nodes
   for ( size_t indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
   {
-    getNode( indexInstance ).process( 1 );
+	if( getNode( indexInstance ).isConnected() )
+	  getNode( indexInstance ).process( 1 );
   }
   
   bufferOut[0] = getAudioBufferOutput()[0];
