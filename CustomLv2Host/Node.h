@@ -38,6 +38,8 @@ public:
 	Lilv::Instance* getInstance( ) const { return _pInstance; }
 
 	Lilv::Plugin getPlugin( ) const;
+	size_t getNbAudioInput();
+	size_t getNbAudioOutput();
 	const Property getPluginURIProperty( ) const;
 	const Property getAudioURIProperty( ) const;
 	const Property getInputURIProperty( ) const;

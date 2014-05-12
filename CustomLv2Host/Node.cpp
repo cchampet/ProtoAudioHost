@@ -42,7 +42,7 @@ Node::~Node()
 	//pInstance->free();
 }
 
-void Node::initControlBuffers( )
+void Node::initControlBuffers()
 {
 	// @todo : not necessary to add a float for audio port
 	for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
@@ -63,7 +63,7 @@ void Node::connectAudioInput( std::vector< float >& audioInputBuffer)
 	}
 }
 
-void Node::connectAudioOutput( std::vector< float >& audioOutputBuffer)
+void Node::connectAudioOutput( std::vector< float >& audioOutputBuffer )
 {
 	for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
 	{
@@ -77,8 +77,7 @@ void Node::connectAudioOutput( std::vector< float >& audioOutputBuffer)
 	}
 }
 
-
-void Node::connectControls( )
+void Node::connectControls()
 {
 	size_t numPort = getPlugin( ).get_num_ports();
 	for (unsigned int portIndex = 0; portIndex < numPort; ++portIndex)
@@ -157,27 +156,57 @@ Lilv::Plugin Node::getPlugin( ) const
 	return ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( getPluginURIProperty( ) );
 }
 
-const Node::Property Node::getPluginURIProperty( ) const 
+size_t Node::getNbAudioInput()
+{
+	size_t nbAudioInput = 0;
+	for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
+	{
+		Lilv::Port port = getPlugin( ).get_port_by_index( portIndex );
+
+		if( port.is_a( getAudioURIProperty( ) ) && port.is_a( getInputURIProperty( ) ) )
+		{
+			++nbAudioInput;
+		}
+	}
+	return nbAudioInput;
+}
+
+size_t Node::getNbAudioOutput()
+{
+	size_t nbAudioOutput = 0;
+	for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
+	{
+		Lilv::Port port = getPlugin( ).get_port_by_index( portIndex );
+
+		if( port.is_a( getAudioURIProperty() ) && port.is_a( getOutputURIProperty( ) ) )
+		{
+			++nbAudioOutput;
+		}
+	}
+	return nbAudioOutput;
+}
+
+const Node::Property Node::getPluginURIProperty() const 
 { 
 	return _pGraph->getWorld()->new_uri( &( _pInstance->get_descriptor()->URI[0] ) ); 
 }
 
-const Node::Property Node::getAudioURIProperty( ) const 
+const Node::Property Node::getAudioURIProperty() const 
 { 
 	return _pGraph->getWorld()->new_uri( LILV_URI_AUDIO_PORT ); 
 }
 
-const Node::Property Node::getInputURIProperty( ) const 
+const Node::Property Node::getInputURIProperty() const 
 { 
 	return _pGraph->getWorld()->new_uri( LILV_URI_INPUT_PORT ); 
 }
 
-const Node::Property Node::getOutputURIProperty( ) const 
+const Node::Property Node::getOutputURIProperty() const 
 { 
 	return _pGraph->getWorld()->new_uri( LILV_URI_OUTPUT_PORT ); 
 }
 
-const Node::Property Node::getControlURIProperty( ) const 
+const Node::Property Node::getControlURIProperty() const 
 { 
 	return _pGraph->getWorld()->new_uri( LILV_URI_CONTROL_PORT ); 
 }
