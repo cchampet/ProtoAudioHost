@@ -25,14 +25,15 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	const int format = infile.format();
+	//const int inputFormat = infile.format();
+	const int outputFormat = SF_FORMAT_AIFF | SF_FORMAT_PCM_16;
 	const int numChannels = infile.channels();
 	const int samplerate = infile.samplerate();
 	// const size_t nbFrames = infile.frames();
 	// const size_t nbSamples = nbFrames * numChannels;
 	//const float timeToRead = nbFrames / (float)samplerate; //in seconds
-
-	outfile = SndfileHandle( "../data/underwaterVFX.wav" , SFM_WRITE, format , numChannels , samplerate );
+	
+	outfile = SndfileHandle( "../data/underwaterVFX.aiff" , SFM_WRITE, outputFormat , numChannels , samplerate );
 
 	// create graph
 	sound::Lv2Graph graph;
@@ -41,8 +42,8 @@ int main(int argc, char** argv)
 	// add nodes to the graph
 	sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
 	sound::Node& gain2 = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
-	sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
 	sound::Node& reverb = graph.addNode("http://plugin.org.uk/swh-plugins/gverb", samplerate);
+	sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
 
 	// connect ports
 	graph.connect( graph.getAudioBufferInput(), gain );
