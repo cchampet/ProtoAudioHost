@@ -49,7 +49,7 @@ void Node::initControlBuffers( )
     _controlBuffers.push_back( 0.f );
 }
 
-void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
+void Node::connectAudioInput( std::vector< float >& audioInputBuffer)
 {
   for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
   {
@@ -63,7 +63,7 @@ void Node::connectAudioInput( std::vector< short >& audioInputBuffer)
   }
 }
 
-void Node::connectAudioOutput( std::vector< short >& audioOutputBuffer)
+void Node::connectAudioOutput( std::vector< float >& audioOutputBuffer)
 {
   for (unsigned int portIndex = 0; portIndex < getPlugin( ).get_num_ports(); ++portIndex)
   {

@@ -24,8 +24,8 @@ Lv2Graph::~Lv2Graph()
 void Lv2Graph::createAudioBuffer( const int bufferSize )
 {
   // AudioBuffers Input / Output
-  _audioBuffers.push_back( std::vector< short >( bufferSize, 0.f ) );
-  _audioBuffers.push_back( std::vector< short >( bufferSize, 0.f ) );
+  _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
+  _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
 }
 
 void Lv2Graph::setUp( )
@@ -49,25 +49,25 @@ Node& Lv2Graph::addNode( const std::string pluginURI, int samplerate )
   return *_nodes.back();
 }
 
-void Lv2Graph::connect( std::vector< short >& bufferIn, Node& startedNode )
+void Lv2Graph::connect( std::vector< float >& bufferIn, Node& startedNode )
 {
 	startedNode.connectAudioInput( bufferIn );
 }
 
-void Lv2Graph::connect( Node& endedNode, std::vector< short >& bufferOut )
+void Lv2Graph::connect( Node& endedNode, std::vector< float >& bufferOut )
 {
 	endedNode.connectAudioOutput( bufferOut );
 }
 
 void Lv2Graph::connect( Node& node1, Node& node2 )
 {
-  _audioBuffers.push_back( std::vector< short >( 1, 0.f ) );
+  _audioBuffers.push_back( std::vector< float >( 1, 0.f ) );
   
   node1.connectAudioOutput( _audioBuffers.at( _audioBuffers.size() - 1 ) );
   node2.connectAudioInput( _audioBuffers.at( _audioBuffers.size() - 1 ) );
 }
 
-void Lv2Graph::processFrame( const short* bufferIn, short* bufferOut )
+void Lv2Graph::processFrame( const float* bufferIn, float* bufferOut )
 {
   // if the graph is empty
   if ( _nodes.size() == 0 )

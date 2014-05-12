@@ -21,16 +21,16 @@ public:
 
   Node& addNode( const std::string pluginURI, int samplerate );
   
-  void connect( std::vector< short >& bufferIn, Node& startedNode );
-  void connect( Node& endedNode, std::vector< short >& bufferOut );
+  void connect( std::vector< float >& bufferIn, Node& startedNode );
+  void connect( Node& endedNode, std::vector< float >& bufferOut );
   void connect( Node& node1, Node& node2 );
 
-  void processFrame( const short* bufferIn, short* bufferOut );
+  void processFrame( const float* bufferIn, float* bufferOut );
 
   Lilv::World* getWorld() const {return _pWorld;}
   Node& getNode( size_t indexNode ) const { return *_nodes.at(indexNode); }
-  std::vector< short >& getAudioBufferInput() { return _audioBuffers[0]; }
-  std::vector< short >& getAudioBufferOutput() { return _audioBuffers[1]; }
+  std::vector< float >& getAudioBufferInput() { return _audioBuffers[0]; }
+  std::vector< float >& getAudioBufferOutput() { return _audioBuffers[1]; }
 
 private:
 
@@ -47,7 +47,7 @@ private:
   /**
   * Audio buffers, to manage results of the nodes's process.
   */
-  std::vector< std::vector< short > > _audioBuffers;
+  std::vector< std::vector< float > > _audioBuffers;
 };
 
 }
