@@ -13,74 +13,73 @@
 */
 int main(int argc, char** argv)
 {
-  SndfileHandle infile;
-  SndfileHandle outfile;
-  try
-  {
-    infile = SndfileHandle( "../data/underwater.wav" );
-  }
-  catch(std::exception& e)
-  {
-    std::cout << "Exception when try to read the file :  " << e.what() << std::endl;
-    return 1;
-  }
-  
-  const int format = infile.format();
-  const int numChannels = infile.channels();
-  const int samplerate = infile.samplerate();
-  // const size_t nbFrames = infile.frames();
-  // const size_t nbSamples = nbFrames * numChannels;
-  //const float timeToRead = nbFrames / (float)samplerate; //in seconds
+	SndfileHandle infile;
+	SndfileHandle outfile;
+	try
+	{
+		infile = SndfileHandle( "../data/underwater.wav" );
+	}
+	catch(std::exception& e)
+	{
+		std::cout << "Exception when try to read the file :  " << e.what() << std::endl;
+		return 1;
+	}
 
-  outfile = SndfileHandle( "../data/underwaterVFX.wav" , SFM_WRITE, format , numChannels , samplerate );
+	const int format = infile.format();
+	const int numChannels = infile.channels();
+	const int samplerate = infile.samplerate();
+	// const size_t nbFrames = infile.frames();
+	// const size_t nbSamples = nbFrames * numChannels;
+	//const float timeToRead = nbFrames / (float)samplerate; //in seconds
 
-  // create graph
-  sound::Lv2Graph graph;
-  graph.createAudioBuffer( samplerate );
-  //graph.createAudioBuffer( samplerate );
-  
-  // add nodes to the graph
-  sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
-  sound::Node& gain2 = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
-  sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
-  sound::Node& reverb = graph.addNode("http://plugin.org.uk/swh-plugins/gverb", samplerate);
-  
-  // connect ports
-  graph.connect( graph.getAudioBufferInput(), gain );
-  graph.connect( gain, gain2, 2 );
-  graph.connect( gain2, reverb, 3 );
-  graph.connect( reverb, limiter, 4 );
-  graph.connect( limiter, graph.getAudioBufferOutput() );
-  
-  // update params
-  gain.setParam( "gain", 1.f );
-  gain2.setParam( "gain", 1.f );
-  reverb.setParam( "revtime", 2.f );
-  limiter.setParam( "delay_s", 0.15f );
-  limiter.setParam( "limit", -10.f );
-  
-  graph.setUp();
-  
-  while( 1 )
-  {
-    // read on disk
-    size_t currentReadedSamples = infile.read( &graph.getAudioBufferInput()[0], samplerate );
-    std::cout << "readedSamples : " << currentReadedSamples << std::endl;
-    
-	if( ! currentReadedSamples )
-      break;
-	
-    // process graph
-    for (size_t i = 0; i < currentReadedSamples; ++i) 
-    {
-      graph.processFrame( &graph.getAudioBufferInput()[i], &graph.getAudioBufferOutput()[i] );
-    }
-	
-    // write on disk
-    outfile.write( &graph.getAudioBufferOutput()[0], currentReadedSamples );
-  }
+	outfile = SndfileHandle( "../data/underwaterVFX.wav" , SFM_WRITE, format , numChannels , samplerate );
 
-  return 0;
+	// create graph
+	sound::Lv2Graph graph;
+	graph.createAudioBuffer( samplerate );
+
+	// add nodes to the graph
+	sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
+	sound::Node& gain2 = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
+	sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
+	sound::Node& reverb = graph.addNode("http://plugin.org.uk/swh-plugins/gverb", samplerate);
+
+	// connect ports
+	graph.connect( graph.getAudioBufferInput(), gain );
+	graph.connect( gain, gain2, 2 );
+	graph.connect( gain2, reverb, 3 );
+	graph.connect( reverb, limiter, 4 );
+	graph.connect( limiter, graph.getAudioBufferOutput() );
+
+	// update params
+	gain.setParam( "gain", 1.f );
+	gain2.setParam( "gain", 1.f );
+	reverb.setParam( "revtime", 2.f );
+	limiter.setParam( "delay_s", 0.15f );
+	limiter.setParam( "limit", -10.f );
+
+	graph.setUp();
+
+	while( 1 )
+	{
+		// read on disk
+		size_t currentReadedSamples = infile.read( &graph.getAudioBufferInput()[0], samplerate );
+		std::cout << "readedSamples : " << currentReadedSamples << std::endl;
+
+		if( ! currentReadedSamples )
+			break;
+
+		// process graph
+		for (size_t i = 0; i < currentReadedSamples; ++i) 
+		{
+			graph.processFrame( &graph.getAudioBufferInput()[i], &graph.getAudioBufferOutput()[i] );
+		}
+
+		// write on disk
+		outfile.write( &graph.getAudioBufferOutput()[0], currentReadedSamples );
+	}
+
+	return 0;
 }
 
 
