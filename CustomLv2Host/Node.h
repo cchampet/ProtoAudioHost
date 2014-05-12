@@ -21,8 +21,8 @@ public:
   Node( Lv2Graph* graph, const std::string pluginURI, int sampleRate );
   ~Node( );
   
-  void connectAudioInput( std::vector< float >& audioInputBuffer );
-  void connectAudioOutput( std::vector< float >& audioOutputBuffer );
+  void connectAudioInput( std::vector< short >& audioInputBuffer );
+  void connectAudioOutput( std::vector< short >& audioOutputBuffer );
 
   void connectControls( );
 
