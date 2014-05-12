@@ -26,18 +26,26 @@ void Lv2Graph::createAudioBuffer( const int bufferSize )
   // AudioBuffers Input / Output
   _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
   _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
+  
+  // @todo : create a buffer in function connect(Node&, Node&)
+  _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
+  _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
+  _audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
 }
 
 void Lv2Graph::setUp( )
 {
   for ( unsigned int indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
   {
-    // As a special case, when sample_count == 0, the plugin should update
-    // any output ports that represent a single instant in time (e.g. control
-    // ports, but not audio ports). This is particularly useful for latent
-    // plugins, which should update their latency output port so hosts can
-    // pre-roll plugins to compute latency.
-    getNode( indexInstance ).process( 0 );
+	if( getNode( indexInstance ).isConnected() )
+	{
+		// As a special case, when sample_count == 0, the plugin should update
+		// any output ports that represent a single instant in time (e.g. control
+		// ports, but not audio ports). This is particularly useful for latent
+		// plugins, which should update their latency output port so hosts can
+		// pre-roll plugins to compute latency.
+		getNode( indexInstance ).process( 0 );
+	}
   }
   //@todo : update buffer when latency
 }
@@ -59,12 +67,10 @@ void Lv2Graph::connect( Node& endedNode, std::vector< float >& bufferOut )
 	endedNode.connectAudioOutput( bufferOut );
 }
 
-void Lv2Graph::connect( Node& node1, Node& node2 )
+void Lv2Graph::connect( Node& node1, Node& node2, size_t numAudioBuffer )
 {
-  _audioBuffers.push_back( std::vector< float >( 1, 0.f ) );
-  
-  node1.connectAudioOutput( _audioBuffers.at( _audioBuffers.size() - 1 ) );
-  node2.connectAudioInput( _audioBuffers.at( _audioBuffers.size() - 1 ) );
+  node1.connectAudioOutput( _audioBuffers.at( numAudioBuffer ) );
+  node2.connectAudioInput( _audioBuffers.at( numAudioBuffer ) );
 }
 
 void Lv2Graph::processFrame( const float* bufferIn, float* bufferOut )

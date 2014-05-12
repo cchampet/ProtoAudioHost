@@ -23,7 +23,7 @@ public:
   
   void connect( std::vector< float >& bufferIn, Node& startedNode );
   void connect( Node& endedNode, std::vector< float >& bufferOut );
-  void connect( Node& node1, Node& node2 );
+  void connect( Node& node1, Node& node2, size_t numAudioBuffer );
 
   void processFrame( const float* bufferIn, float* bufferOut );
 
@@ -31,6 +31,7 @@ public:
   Node& getNode( size_t indexNode ) const { return *_nodes.at(indexNode); }
   std::vector< float >& getAudioBufferInput() { return _audioBuffers[0]; }
   std::vector< float >& getAudioBufferOutput() { return _audioBuffers[1]; }
+  std::vector< std::vector< float > >& getAudioBuffer() {return _audioBuffers;}
 
 private:
 
