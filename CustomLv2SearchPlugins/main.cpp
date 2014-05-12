@@ -333,7 +333,7 @@ static void print_usage()
     printf("  --all           Show info of all plugins\n");
     printf("  --latency       Show info of plugins which has latency\n");
     printf("  --presets       Show info of plugins which has presets (at least one)\n");
-    printf("  --uri <uri>    Show info of plugins which has presets (at least one)\n");
+    printf("  --uri <uri>     Show info of plugins which has presets (at least one)\n");
 
     printf("\n");
     printf("The environment variable LV2_PATH can be used to control where\n");
