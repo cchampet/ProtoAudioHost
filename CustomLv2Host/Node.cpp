@@ -20,15 +20,15 @@ Node::Node( Lv2Graph* graph, const std::string pluginURIstr, int samplerate )
 	Property pluginURI = _pGraph->getWorld()->new_uri( &( pluginURIstr[0] ) );
 	Lilv::Plugin plugin = ( ( Lilv::Plugins )_pGraph->getWorld()->get_all_plugins() ).get_by_uri( pluginURI );
 
+	if(!plugin)
+		throw std::runtime_error("Can't find plugin "+pluginURIstr);
+	
 	// test
 	Debugger::print_plugin( _pGraph->getWorld()->me, plugin.me );
 
 	_pInstance = Lilv::Instance::create( plugin, samplerate, NULL );
 	if( !_pInstance )
-	{
-		// instantiation failed
-		throw std::bad_alloc( );
-	}
+		throw std::runtime_error("Can't instantiate plugin "+pluginURIstr);
 
 	_pInstance->activate( );
 
