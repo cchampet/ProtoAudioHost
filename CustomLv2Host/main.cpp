@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 	SndfileHandle outfile;
 	try
 	{
-		infile = SndfileHandle( "../data/underwater.wav" );
+		infile = SndfileHandle( "/datas/cnt/workspace/ProtoAudio/CustomLv2Host/data/underwater.wav" );
 	}
 	catch(std::exception& e)
 	{
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 	// const size_t nbSamples = nbFrames * numChannels;
 	//const float timeToRead = nbFrames / (float)samplerate; //in seconds
 	
-	outfile = SndfileHandle( "../data/underwaterVFX.aiff" , SFM_WRITE, outputFormat , numChannels , samplerate );
+	outfile = SndfileHandle( "/datas/cnt/workspace/ProtoAudio/CustomLv2Host/data/underwaterVFX.aiff" , SFM_WRITE, outputFormat , numChannels , samplerate );
 
 	// create graph
 	sound::Lv2Graph graph;

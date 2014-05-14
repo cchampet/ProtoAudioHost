@@ -4,7 +4,7 @@ BIN     = customLv2Host
 INC_DIR = -I/datas/cnt/workspace/lv2/lilv-0.18.0/lilv-install/include/lilv-0
 
 LIB_DIR = -L/datas/cnt/workspace/lv2/lilv-0.18.0/lilv-install/lib
-LIB     = -lsndfile -llilv-0
+LIB     = -lsndfile -pthread -llilv-0
 
 OBJ_DIR = obj
 OBJ = $(OBJ_DIR)/*.o
