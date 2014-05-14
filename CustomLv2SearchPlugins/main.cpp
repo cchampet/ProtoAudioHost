@@ -334,6 +334,7 @@ static void print_usage()
     printf("  --latency       Show info of plugins which has latency\n");
     printf("  --presets       Show info of plugins which has presets (at least one)\n");
     printf("  --uri <uri>     Show info of plugins which has presets (at least one)\n");
+    printf("  --no-input      Show info of plugins which has no input (ie. generator...)\n");
 
     printf("\n");
     printf("The environment variable LV2_PATH can be used to control where\n");
@@ -348,6 +349,7 @@ int main(int argc, char** argv)
     bool presets = false;
     bool pluginURI = false;
     std::string pluginURIstr;
+    bool noInput = false;
 
     print_usage();
     
@@ -375,6 +377,10 @@ int main(int argc, char** argv)
         {
             pluginURI = true;
             pluginURIstr = std::string(argv[i+1]);
+        }
+        else if (!strcmp(argv[i], "--no-input"))
+        {
+            noInput = true;
         }
     }
 
@@ -416,6 +422,22 @@ int main(int argc, char** argv)
         else if(pluginURI)
         {
             if(lilv_node_as_uri(lilv_plugin_get_uri(p)) ==  lilv_node_as_uri(lilv_new_uri(world, &pluginURIstr[0])))
+                print_plugin(world, p);
+        }
+        else if(noInput)
+        {
+            size_t nbInput = 0;
+            for(unsigned int portIndex = 0; portIndex < lilv_plugin_get_num_ports(p); ++portIndex)
+            {
+                const LilvPort * port = lilv_plugin_get_port_by_index(p, portIndex);
+
+                if(lilv_port_is_a(p, port, lilv_new_uri(world, LILV_URI_AUDIO_PORT))
+                    && lilv_port_is_a(p, port, lilv_new_uri(world, LILV_URI_INPUT_PORT)))
+                {
+                    ++nbInput;
+                }
+            }
+            if(nbInput == 0)
                 print_plugin(world, p);
         }
     }
