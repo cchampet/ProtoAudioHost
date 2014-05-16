@@ -9,6 +9,7 @@
 #include "lv2/lv2plug.in/ns/ext/port-groups/port-groups.h"
 #include "lv2/lv2plug.in/ns/ext/presets/presets.h"
 #include "lv2/lv2plug.in/ns/ext/event/event.h"
+#include "lv2/lv2plug.in/ns/ext/atom/atom.h"
 
 
 void static print_port(LilvWorld* world,
@@ -328,6 +329,7 @@ static void print_plugin(LilvWorld* world, const LilvPlugin* p)
 static void print_usage()
 {
     printf("Usage: customLv2SearchPlugins [OPTION]...\n");
+    printf("Warning: Can use only one option at a time.\n");
     printf("List all installed LV2 plugins, depend on the filter you pass in parameters.\n");
     printf("\n");
     printf("  --all           Show info of all plugins\n");
@@ -335,10 +337,12 @@ static void print_usage()
     printf("  --presets       Show info of plugins which has presets (at least one)\n");
     printf("  --uri <uri>     Show info of plugins which has presets (at least one)\n");
     printf("  --no-input      Show info of plugins which has no input (ie. generator...)\n");
+    printf("  --atom          Show info of plugins which has atom port (at least one)\n");
 
     printf("\n");
     printf("The environment variable LV2_PATH can be used to control where\n");
     printf("this (and all other lilv based LV2 hosts) will search for plugins.\n");
+    printf("\n\n");
 }
 
 
@@ -350,6 +354,7 @@ int main(int argc, char** argv)
     bool pluginURI = false;
     std::string pluginURIstr;
     bool noInput = false;
+    bool atom = false;
 
     print_usage();
     
@@ -357,7 +362,6 @@ int main(int argc, char** argv)
     {
         if (!strcmp(argv[i], "--help")) 
         {
-            print_usage();
             return 0;
         }
         else if (!strcmp(argv[i], "--all"))
@@ -381,6 +385,10 @@ int main(int argc, char** argv)
         else if (!strcmp(argv[i], "--no-input"))
         {
             noInput = true;
+        }
+		else if (!strcmp(argv[i], "--atom"))
+        {
+            atom = true;
         }
     }
 
@@ -440,6 +448,25 @@ int main(int argc, char** argv)
             if(nbInput == 0)
                 print_plugin(world, p);
         }
+		else if(atom)
+		{
+			bool atLeastOneAtomPort = false;
+            for(unsigned int portIndex = 0; portIndex < lilv_plugin_get_num_ports(p); ++portIndex)
+            {
+                const LilvPort * port = lilv_plugin_get_port_by_index(p, portIndex);
+
+                if(lilv_port_is_a(p, port, lilv_new_uri(world, LV2_ATOM__AtomPort)))
+				{
+					atLeastOneAtomPort = true;
+					break;
+				}
+            }
+            if(atLeastOneAtomPort)
+			{
+                print_plugin(world, p);
+				atLeastOneAtomPort = false;
+			}
+		}
     }
 
     lilv_world_free(world);
