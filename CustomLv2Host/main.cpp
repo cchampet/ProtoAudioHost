@@ -6,8 +6,6 @@
 #include "Node.h"
 #include "Lv2Graph.h"
 
-#include "lv2/lv2plug.in/ns/ext/presets/presets.h"
-
 /**
 * Proto which read test.wav, process a gain of 5db and a limiter which produce delay of 0.15s, and write testVFX.wav
 */
@@ -15,9 +13,13 @@ int main(int argc, char** argv)
 {
 	SndfileHandle infile;
 	SndfileHandle outfile;
+	
+	const std::string strInput = "/datas/cnt/workspace/ProtoAudio/CustomLv2Host/data/underwater.wav";
+	const std::string strOutput = "/datas/cnt/workspace/ProtoAudio/CustomLv2Host/data/underwaterVFX.aiff";
+	
 	try
 	{
-		infile = SndfileHandle( "/datas/cnt/workspace/ProtoAudio/CustomLv2Host/data/underwater.wav" );
+		infile = SndfileHandle( strInput );
 	}
 	catch(std::exception& e)
 	{
@@ -33,51 +35,54 @@ int main(int argc, char** argv)
 	// const size_t nbSamples = nbFrames * numChannels;
 	//const float timeToRead = nbFrames / (float)samplerate; //in seconds
 	
-	outfile = SndfileHandle( "/datas/cnt/workspace/ProtoAudio/CustomLv2Host/data/underwaterVFX.aiff" , SFM_WRITE, outputFormat , numChannels , samplerate );
+	outfile = SndfileHandle( strOutput , SFM_WRITE, outputFormat , numChannels , samplerate );
 
 	// create graph
 	sound::Lv2Graph graph;
 	graph.createAudioBuffer( samplerate );
-
+	
 	// add nodes to the graph
+	sound::Node& reader = graph.addNode( "http://ll-plugins.nongnu.org/lv2/lv2pftci/reader", samplerate );
 	sound::Node& gain = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
 	sound::Node& gain2 = graph.addNode( "http://lv2plug.in/plugins/eg-amp", samplerate );
 	sound::Node& reverb = graph.addNode("http://plugin.org.uk/swh-plugins/gverb", samplerate);
 	sound::Node& limiter = graph.addNode("http://plugin.org.uk/swh-plugins/lookaheadLimiterConst", samplerate);
 
 	// connect ports
-	graph.connect( graph.getAudioBufferInput(), gain );
-	graph.connect( gain, gain2, 2 );
-	graph.connect( gain2, reverb, 3 );
-	graph.connect( reverb, limiter, 4 );
-	graph.connect( limiter, graph.getAudioBufferOutput() );
+	graph.connect( reader, gain, 0 );
+	graph.connect( gain, gain2, 1 );
+	graph.connect( gain2, reverb, 2 );
+	graph.connect( reverb, graph.getAudioBuffer()[4] );
 
 	// update params
-	gain.setParam( "gain", 1.f );
-	gain2.setParam( "gain", 1.f );
-	reverb.setParam( "revtime", 2.f );
+	reader.setParam( "inputFile", strInput );
+	reader.setParam( "nChannels", numChannels );
+	gain.setParam( "gain", 0.f );
+	gain2.setParam( "gain", 0.f );
+	reverb.setParam( "revtime", 0.f );
 	limiter.setParam( "delay_s", 0.15f );
 	limiter.setParam( "limit", -10.f );
-
+	
 	graph.setUp();
-
+		
+	std::vector< float > tmpBuffer( samplerate, 0.f );
 	while( 1 )
 	{
 		// read on disk
-		size_t currentReadedSamples = infile.read( &graph.getAudioBufferInput()[0], samplerate );
+		size_t currentReadedSamples = infile.read( &tmpBuffer[0], samplerate );
 		std::cout << "readedSamples : " << currentReadedSamples << std::endl;
 
 		if( ! currentReadedSamples )
 			break;
 
 		// process graph
-		for (size_t i = 0; i < currentReadedSamples; ++i) 
+		for( size_t i = 0; i < currentReadedSamples; ++i )
 		{
-			graph.processFrame( &graph.getAudioBufferInput()[i], &graph.getAudioBufferOutput()[i] );
+			graph.processFrame( &graph.getAudioBuffer()[0][i], &graph.getAudioBuffer()[4][i] );
 		}
 
 		// write on disk
-		outfile.write( &graph.getAudioBufferOutput()[0], currentReadedSamples );
+		outfile.write( &graph.getAudioBuffer()[4][0], currentReadedSamples );
 	}
 
 	return 0;
@@ -88,6 +93,10 @@ int main(int argc, char** argv)
 //sound::Node& reverb = graph.addNode("http://calf.sourceforge.net/plugins/Reverb", samplerate);
 // test - presets
 /*
+
+// presets
+#include "lv2/lv2plug.in/ns/ext/presets/presets.h"
+
 LilvNode* label_pred = lilv_new_uri(graph.getWorld( )->me, LILV_NS_RDFS "label");
 LilvNode* preset_class = lilv_new_uri(graph.getWorld( )->me, LV2_PRESETS__Preset);
 

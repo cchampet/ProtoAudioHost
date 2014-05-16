@@ -1,7 +1,36 @@
 #include <iostream>
 #include <exception>
+#include <stdlib.h>
 
 #include "Lv2Graph.h"
+
+// @todo : move this out of the function...
+char** uris   = NULL;
+size_t n_uris = 0;
+
+static char*
+copy_string(const char* str)
+{
+	const size_t len = strlen(str);
+	char*        dup = (char*)malloc(len + 1);
+	memcpy(dup, str, len + 1);
+	return dup;
+}
+
+static LV2_URID
+urid_map(LV2_URID_Map_Handle handle, const char* uri)
+{
+	for (size_t i = 0; i < n_uris; ++i) {
+		if (!strcmp(uris[i], uri)) {
+			return i + 1;
+		}
+	}
+
+	uris = (char**)realloc(uris, ++n_uris * sizeof(char*));
+	uris[n_uris - 1] = copy_string(uri);
+	return n_uris;
+}
+//
 
 namespace sound
 {
@@ -10,6 +39,9 @@ Lv2Graph::Lv2Graph()
 {
 	_pWorld = new Lilv::World();
 	_pWorld->load_all();
+	
+	_map = { NULL, urid_map };
+	lv2_atom_forge_init( &_forge, &_map );
 }
 
 Lv2Graph::~Lv2Graph()
@@ -23,29 +55,30 @@ Lv2Graph::~Lv2Graph()
 
 void Lv2Graph::createAudioBuffer( const int bufferSize )
 {
-	// AudioBuffers Input / Output
-	_audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
-	_audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
-
 	// @todo : create a buffer in function connect(Node&, Node&)
+	_audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
+	_audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
 	_audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
 	_audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
 	_audioBuffers.push_back( std::vector< float >( bufferSize, 0.f ) );
 }
 
-void Lv2Graph::setUp( )
+void Lv2Graph::setUp()
 {
-	for ( unsigned int indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
+	for ( size_t indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
 	{
-		if( getNode( indexInstance ).isConnected() )
-		{
-			// As a special case, when sample_count == 0, the plugin should update
-			// any output ports that represent a single instant in time (e.g. control
-			// ports, but not audio ports). This is particularly useful for latent
-			// plugins, which should update their latency output port so hosts can
-			// pre-roll plugins to compute latency.
-			getNode( indexInstance ).process( 0 );
-		}
+		if( ! getNode( indexInstance ).isConnected() )
+			continue;
+		
+		// activate node
+		_nodes[indexInstance]->getInstance()->activate();
+
+		// As a special case, when sample_count == 0, the plugin should update
+		// any output ports that represent a single instant in time (e.g. control
+		// ports, but not audio ports). This is particularly useful for latent
+		// plugins, which should update their latency output port so hosts can
+		// pre-roll plugins to compute latency.
+		getNode( indexInstance ).process( 0 );
 	}
 	//@todo : update buffer when latency
 }
@@ -82,19 +115,18 @@ void Lv2Graph::processFrame( const float* bufferIn, float* bufferOut )
 		return;
 	}
 
-	getAudioBufferInput()[0] = bufferIn[0];
+	getAudioBuffer()[0][0] = bufferIn[0];
 
 	// process nodes
 	for ( size_t indexInstance = 0; indexInstance < _nodes.size(); ++indexInstance )
 	{
 		if( getNode( indexInstance ).isConnected() )
+		{
 			getNode( indexInstance ).process( 1 );
+		}
 	}
 
-	bufferOut[0] = getAudioBufferOutput()[0];
-
-	// Print ControlBuffers (can see the value of latency after process nodes)
-	// _nodes.at( 1 )->printControlBuffers( );
+	bufferOut[0] = getAudioBuffer()[4][0];
 }
 
 }

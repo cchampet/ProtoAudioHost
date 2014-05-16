@@ -4,6 +4,10 @@
 // Lilv wrapper C++
 #include <lilv/lilvmm.hpp>
 
+// atom
+#include "lv2/lv2plug.in/ns/ext/atom/atom.h"
+#include "lv2/lv2plug.in/ns/ext/atom/forge.h"
+
 #include "Node.h"
 
 namespace sound
@@ -17,6 +21,7 @@ public:
 
 	void createAudioBuffer( const int bufferSize );
 
+	// before process
 	void setUp();
 
 	Node& addNode( const std::string pluginURI, int samplerate );
@@ -29,8 +34,6 @@ public:
 
 	Lilv::World* getWorld() const {return _pWorld;}
 	Node& getNode( size_t indexNode ) const { return *_nodes.at(indexNode); }
-	std::vector< float >& getAudioBufferInput() { return _audioBuffers[0]; }
-	std::vector< float >& getAudioBufferOutput() { return _audioBuffers[1]; }
 	std::vector< std::vector< float > >& getAudioBuffer() {return _audioBuffers;}
 
 private:
@@ -49,6 +52,14 @@ private:
 	* Audio buffers, to manage results of the nodes's process.
 	*/
 	std::vector< std::vector< float > > _audioBuffers;
+
+public:
+	
+	/**
+	 * Data to manage Atom.
+	 */
+	LV2_URID_Map	_map;
+	LV2_Atom_Forge	_forge;
 };
 
 }
