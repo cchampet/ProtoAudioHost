@@ -7,7 +7,7 @@ LIB_DIR = -L/datas/cnt/workspace/lv2/lv2-c++-tools-1.0.5/build/lib -L/datas/cnt/
 LIB     = -lsox -llv2-plugin -lpthread
 
 
-$(BUNDLE): manifest.ttl reader.so
+$(BUNDLE): manifest.ttl reader.so reader.cpp
 	rm -rf $(BUNDLE_PATH)$(BUNDLE)
 	mkdir $(BUNDLE_PATH)$(BUNDLE)
 	cp manifest.ttl reader.ttl reader.so $(BUNDLE_PATH)$(BUNDLE)
